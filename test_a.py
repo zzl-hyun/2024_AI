@@ -1,9 +1,7 @@
 import heapq  # 우선순위 큐
 import argparse
 import random
-import time
 exploredList = []
-
 class Node:
     def __init__(self, parent=None, position=None):
         self.parent = parent
@@ -17,20 +15,18 @@ class Node:
 
     def __lt__(self, other):
         return self.f < other.f
-
-def Manhattan(node, goal, D=1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
+'''
+def heuristic(node, goal, D=1, D2=2 ** 0.5):  # Diagonal Distance
+    dx = abs(node.position[0] - goal.position[0])
+    dy = abs(node.position[1] - goal.position[1])
+    return D * (dx + dy) + (D2 - 2 * D) * min(dx, dy)
+'''
+def heuristic(node, goal, D=2):  # 대각선 이동이 없는 경우의 휴리스틱 함수
     dx = abs(node.position[0] - goal.position[0])
     dy = abs(node.position[1] - goal.position[1])
     return (dx + dy)
 
-def Euclidean(node, goal, D=1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
-    dx = abs(node.position[0] - goal.position[0])
-    dy = abs(node.position[1] - goal.position[1])
-    return D * (dx ** 2 + dy ** 2)
-
-
-
-def aStar(maze, start, end, ratio):
+def aStar(maze, start, end):
     # startNode와 endNode 초기화
     startNode = Node(None, start)
     endNode = Node(None, end)
@@ -39,10 +35,11 @@ def aStar(maze, start, end, ratio):
     openList = []
     closedSet = set()
 
+    closedList = []
 
     explored = 0
     min_f_node = Node(startNode, start)
-    min_f_node.f = 99999999999
+    min_f_node.f = float('inf')
 
     heapq.heappush(openList, startNode)
 
@@ -61,7 +58,7 @@ def aStar(maze, start, end, ratio):
             return path[::-1], explored
 
         # 인접한 xy좌표 전부, DFS
-        for newPosition in (0, -1), (0, 1), (-1, 0), (1, 0) :#, (-1, -1), (-1, 1), (1, -1), (1, 1):
+        for newPosition in (0, -1), (0, 1), (-1, 0), (1, 0):# , (-1, -1), (-1, 1), (1, -1), (1, 1):
             # 노드 위치 업데이트
             nodePosition = (currentNode.position[0] + newPosition[0], currentNode.position[1] + newPosition[1])
 
@@ -74,18 +71,15 @@ def aStar(maze, start, end, ratio):
                 continue
 
             new_node = Node(currentNode, nodePosition)
-            # 자식이 closedList에 있으면 continue
+            # 자식이 closedList에 있으면 continuepy
             if new_node.position in closedSet:
                 continue
 
             # f, g, h값 업데이트
             new_node.g = currentNode.g + 1
-            if ratio == 1 :
-                new_node.h = Manhattan(new_node, endNode)
-            elif ratio == 2:
-                new_node.h = Euclidean(new_node, endNode)
+            new_node.h = heuristic(new_node, endNode)
             new_node.f = new_node.g + new_node.h
-
+            print(new_node.f)
 
             # 자식이 openList에 있으고, g값이 더 크면 continue
             # new_node.g >= child.g 로 하면 openList 중복성을 줄일 수도 있습니다.
@@ -94,14 +88,14 @@ def aStar(maze, start, end, ratio):
                 continue
 
             heapq.heappush(openList, new_node)
-            explored += 1
+
             exploredList.append(new_node.position)
-            
             #print(exploredList)
+            explored += 1
             if new_node.f <= min_f_node.f :
                 min_f_node = new_node
-                print("min 갱신" + str(min_f_node.position))
-                
+                print("min 갱신" ,min_f_node.position, min_f_node.f)
+
 
     print("경로를 찾을 수 없습니다.")
 
@@ -117,17 +111,23 @@ def aStar(maze, start, end, ratio):
     print(path)
     return path, explored
 
-def main(maze, start, end, ratio):
-
-    for row in maze:
-        print(' '.join(map(str, row)))
+def main(m, n):
+    start = (1, 1)
+    end = (m - 1, n - 1)
     print(f"Start: {start}")
     print(f"End: {end}")
+    
+    maze = [[1 if random.random() < 0.3 else 0 for _ in range(n)] for _ in range(m)]
+    maze[start[0]][start[1]] = 0  
+    maze[end[0]][end[1]] = 0
 
-    path, explored = aStar(maze, start, end, ratio)
-    print(path)
+    path, explored = aStar(maze, start, end)
+    #print(path)
     print(explored)
-    return path
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Set up a maze of size m x n.')
+    parser.add_argument('--m', type=int, default=30, help='Number of rows in the grid')
+    parser.add_argument('--n', type=int, default=30, help='Number of columns in the grid')
+    args = parser.parse_args()
+    main(args.m, args.n)
