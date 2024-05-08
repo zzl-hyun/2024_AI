@@ -2,8 +2,7 @@ import heapq  # 우선순위 큐
 import argparse
 import random
 import time
-exploredList = []
-
+closedSet = set()
 class Node:
     def __init__(self, parent=None, position=None):
         self.parent = parent
@@ -18,27 +17,25 @@ class Node:
     def __lt__(self, other):
         return self.f < other.f
 
-def Manhattan(node, goal, D=1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
+def Manhattan(node, goal):  # 대각선 이동이 없는 경우의 휴리스틱 함수
     dx = abs(node.position[0] - goal.position[0])
     dy = abs(node.position[1] - goal.position[1])
     return (dx + dy)
 
-def Euclidean(node, goal, D=1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
+def Euclidean(node, goal):  # 대각선 이동이 없는 경우의 휴리스틱 함수
     dx = abs(node.position[0] - goal.position[0])
     dy = abs(node.position[1] - goal.position[1])
-    return D * (dx ** 2 + dy ** 2)
+    return (dx ** 2 + dy ** 2)
 
 
 
-def aStar(maze, start, end, ratio):
+def aStar(maze, start, end, heuristic):
     # startNode와 endNode 초기화
     startNode = Node(None, start)
     endNode = Node(None, end)
 
     # openList, closedList 초기화
     openList = []
-    closedSet = set()
-
 
     explored = 0
     min_f_node = Node(startNode, start)
@@ -80,9 +77,9 @@ def aStar(maze, start, end, ratio):
 
             # f, g, h값 업데이트
             new_node.g = currentNode.g + 1
-            if ratio == 1 :
+            if heuristic == 1 or heuristic == None:
                 new_node.h = Manhattan(new_node, endNode)
-            elif ratio == 2:
+            else:
                 new_node.h = Euclidean(new_node, endNode)
             new_node.f = new_node.g + new_node.h
 
@@ -95,12 +92,11 @@ def aStar(maze, start, end, ratio):
 
             heapq.heappush(openList, new_node)
             explored += 1
-            exploredList.append(new_node.position)
             
             #print(exploredList)
             if new_node.f <= min_f_node.f :
                 min_f_node = new_node
-                print("min 갱신" + str(min_f_node.position))
+                #print("min 갱신" + str(min_f_node.position))
                 
 
     print("경로를 찾을 수 없습니다.")
@@ -117,14 +113,17 @@ def aStar(maze, start, end, ratio):
     print(path)
     return path, explored
 
-def main(maze, start, end, ratio):
+def main(maze, start, end, heuristic):
 
     for row in maze:
         print(' '.join(map(str, row)))
     print(f"Start: {start}")
     print(f"End: {end}")
-
-    path, explored = aStar(maze, start, end, ratio)
+    if heuristic == 1 or heuristic == None:
+        print("heuristic is Manhattan")
+    else:
+        print("heuristic is Euclidean")
+    path, explored = aStar(maze, start, end, heuristic)
     print(path)
     print(explored)
     return path

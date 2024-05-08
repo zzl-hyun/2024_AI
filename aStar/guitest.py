@@ -1,9 +1,11 @@
 import pygame
+from pygame.locals import *
+from pgu import gui
 import sys
 import random
 import argparse
 import astar
-from astar import exploredList
+from astar import closedSet
 
 # Initialize pygame
 pygame.init()
@@ -27,10 +29,10 @@ def generate_maze(m, n, start, end):
     maze[end[0]][end[1]] = 0
     return maze
 
-def start_function(maze, start, end):
+def start_function(maze, start, end, heuristic):
     # maze = [[random.randint(0, 1) for _ in range(m)] for _ in range(n)]
-
-    path = astar.main(maze, start, end, 1)
+    astar.closedSet = set()
+    path = astar.main(maze, start, end, heuristic)
     return path
 
 def draw_maze(screen, maze, start, end, path, visit):
@@ -73,20 +75,21 @@ def initPoint(m, n) :
     start = (random.randint(0, n - 1), random.randint(0, m - 1))
     end = (random.randint(0, n - 1), random.randint(0, m - 1))
     path = [None]
+    visit = [None]
     print(f"Start: {start}")
     print(f"End: {end}")
-    visit = [None]
     return start, end, path, visit
 
 def main(m, n):
     # Create the window
-    WIDTH = n * CELL_SIZE  # Adjusted width to fit the button
+    WIDTH = n * CELL_SIZE + 150 # Adjusted width to fit the button
     HEIGHT = m * CELL_SIZE + 120
+
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Maze Visualization")
 
     start, end, path, visit = initPoint(m, n)
-
+    
     # Generate the maze
     maze = generate_maze(m, n, start, end)
 
@@ -96,8 +99,35 @@ def main(m, n):
     # reset
     reset_button = pygame.Rect(start_button.right + 10 , start_button.top, 200, 100)
 
-    #heuristic
-    ratio_button = pygame.ratio
+    # 라디오 버튼 그룹 생성
+
+    # PGU 앱과 컨테이너 생성
+    app = gui.App()
+    container = gui.Container(width=WIDTH, height=HEIGHT)
+    # 이벤트 처리 함수
+
+    radioButtons = gui.Group(value=1)
+    
+    # 휴리스틱 옵션을 위한 라디오 버튼 추가
+    manhattan_btn = gui.Radio(radioButtons, value=1)
+    manhattann_label = gui.Label('Manhattan')  # 라디오 버튼에 대한 레이블 생성
+
+    euclidean_btn = gui.Radio(radioButtons, value=2)
+    euclidean_label = gui.Label('Euclidean')  # 라디오 버튼에 대한 레이블 생성
+
+    # 라디오 버튼 이벤트 핸들러 등록
+    #radioButtons.connect(gui.CLICK, handle_radio_change)
+
+    # 라디오 버튼을 컨테이너에 추가
+    container.add(manhattan_btn, m * CELL_SIZE + 10, 100)
+    container.add(manhattann_label, m * CELL_SIZE + 30, 100)
+
+    container.add(euclidean_btn, n * CELL_SIZE + 10, 150)
+    container.add(euclidean_label, n * CELL_SIZE + 30, 150)
+    # 앱에 컨테이너 연결
+    
+    app.init(container)
+
 
     # Main loop
     running = True
@@ -105,44 +135,67 @@ def main(m, n):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # 좌클릭
-                    mouse_pos = pygame.mouse.get_pos()
-                    
-                    cell_col = mouse_pos[0] // CELL_SIZE
-                    cell_row = mouse_pos[1] // CELL_SIZE
-                    print(cell_col , "," , cell_row)
-                    if start_button.collidepoint(mouse_pos):
-                        path = start_function(maze, start, end)  # m x n 미로 생성
-                        visit = exploredList
+            else:
+                app.event(event)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:  # 좌클릭
+                        mouse_pos = pygame.mouse.get_pos()
 
-                    elif reset_button.collidepoint(mouse_pos):
-                        start, end, path, visit = initPoint(m, n)
-                        maze = generate_maze(m, n, start, end)
+                        cell_col = mouse_pos[0] // CELL_SIZE
+                        cell_row = mouse_pos[1] // CELL_SIZE
+                        print(cell_col , "," , cell_row)
 
-                    elif maze[cell_row][cell_col] == 0:  # 벽이 아닌 경우에만 벽으로 설정
-                        maze[cell_row][cell_col] = 1
-                    elif maze[cell_row][cell_col] == 1:  # 벽이 아닌 경우에만 벽으로 설정
-                        maze[cell_row][cell_col] = 0
-                        
+                        if cell_row < 0 or cell_row >= len(maze) or cell_col < 0 or cell_col >= len(maze[0]):
+                            pass
+                        elif maze[cell_row][cell_col] == 0:  # 벽이 아닌 경우에만 벽으로 설정
+                            maze[cell_row][cell_col] = 1
+                        elif maze[cell_row][cell_col] == 1:  # 벽이 아닌 경우에만 벽으로 설정
+                            maze[cell_row][cell_col] = 0
+
+                        if manhattan_btn.collidepoint(mouse_pos):
+                            print("set Manhattan", radioButtons.value)
+                        if euclidean_btn.collidepoint(mouse_pos):
+                            print("set Euclidean", radioButtons.value)
+
+                        if start_button.collidepoint(mouse_pos):
+                            if radioButtons.value is None:
+                                print("Set Defalt")
+                                radioButtons.value = 1
+
+                            path = start_function(maze, start, end, radioButtons.value)  # m x n 미로 생성
+                            visit = aStar.closedSet
+                        if reset_button.collidepoint(mouse_pos):
+                            start, end, path = initPoint(m, n)
+                            app.init(container)
+                            maze = generate_maze(m, n, start, end)
+
 
         # 화면 업데이트
         
         screen.fill(WHITE)
-        draw_maze(screen, maze, start, end, path, visit)  # 미로 그리기
+                # 앱 그리기
 
+        draw_maze(screen, maze, start, end, path, astar.closedSet)  # 미로 그리기
         pygame.draw.rect(screen, BUTTON, start_button)  # 시작 버튼 그리기
         pygame.draw.rect(screen, BUTTON, reset_button)  # 시작 버튼 그리기
+
+
 
         # 시작 버튼에 텍스트 추가
         font = pygame.font.Font(None, 36)
         text = font.render("Start A* Search", True, WHITE)  # 흰색 텍스트 생성
+        
         text_rect = text.get_rect(center=start_button.center)
         screen.blit(text, text_rect)
 
         text = font.render("Reset", True, WHITE)  # 초기화 버튼 텍스트 생성
         text_rect = text.get_rect(center=reset_button.center)
+        
+    
+        app.paint(screen)
         screen.blit(text, text_rect)
+
+
 
         pygame.display.flip()
 
