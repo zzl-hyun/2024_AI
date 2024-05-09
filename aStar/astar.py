@@ -267,7 +267,7 @@ def initDraw(screen, maze, start, end):
                 screen.blit(text, text_rect)
 
 def main(m, n, r):
-
+    print(m, "x", n, "\nratio: ", r)
     WIDTH = n * CELL + 150 
     HEIGHT = m * CELL + 120
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -338,7 +338,7 @@ def main(m, n, r):
                         #print(col , "," , row)
 
                         # maze 범위 안에 있어야 함
-                        if row < 0 or row >= len(maze) or col < 0 or col >= len(maze[0]):
+                        if row < 0 or row >= m or col < 0 or col >= n:
                             pass
                         # 드래그
                         elif (row,col) == start or (row,col) == end:
@@ -390,7 +390,7 @@ def main(m, n, r):
                         pos = pygame.mouse.get_pos()
                         col = pos[0] // CELL
                         row = pos[1] // CELL
-                        if row < 0 or row >= len(maze) or col < 0 or col >= len(maze[0]):
+                        if row < 0 or row >= m or col < 0 or col >= n:
                             dragging = False
                             continue
                         if maze[row][col] == 0:
