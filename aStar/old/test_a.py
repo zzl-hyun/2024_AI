@@ -22,32 +22,7 @@ RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 OPEN = (152, 250, 152)
 VISIT = (175, 238, 238)
-class Node:
-    def __init__(self, parent=None, position=None):
-        self.parent = parent
-        self.position = position
-        self.g = 0
-        self.h = 0
-        self.f = 0
 
-    def __eq__(self, other):
-        return self.position == other.position
-
-    def __lt__(self, other):
-        # Tie breaking: smaller g values are preferred when f values are the same
-        if self.f == other.f:
-            return self.h < other.h
-        return self.f < other.f
-
-def Manhattan(node, goal, D =1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
-    dx = abs(node.position[0] - goal.position[0])
-    dy = abs(node.position[1] - goal.position[1])
-    return D * (dx + dy)
-
-def Euclidean(node, goal, D= 1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
-    dx = abs(node.position[0] - goal.position[0])
-    dy = abs(node.position[1] - goal.position[1])
-    return D * (dx * dx + dy * dy) #** 0.5
 
 
 def liveDrawVisit(screen, start, end, visit):
@@ -65,6 +40,50 @@ def liveDrawVisit(screen, start, end, visit):
 
     # Limit to 60 frames per second
     #pygame.time.Clock().tick(60)
+
+def liveDrawOpen(screen, maze, start, end, visit):
+    # Draw visited cells
+    for node in visit:
+        row, col = node.position
+        color = OPEN
+        pygame.draw.rect(screen, color, (col * CELL_SIZE + 1, row * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2))
+        if (row, col) == start:  # Check if it's the start cell
+            font = pygame.font.Font(None, 18)
+            text = font.render("S", True, BLACK)  # White "S" for start cell
+            text_rect = text.get_rect(center=((col + 0.5) * CELL_SIZE, (row + 0.5) * CELL_SIZE))
+            screen.blit(text, text_rect)
+    # Apply changes to the screen
+    pygame.display.flip()
+    pygame.time.Clock().tick(60)
+
+
+class Node:
+    def __init__(self, parent=None, position=None):
+        self.parent = parent
+        self.position = position
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+    def __eq__(self, other):
+        return self.position == other.position
+
+    def __lt__(self, other):
+        # Tie breaking: smaller g values are preferred when f values are the same
+        if self.f == other.f:
+            return self.h < other.h
+        return self.f < other.f
+
+
+def Manhattan(node, goal, D =1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
+    dx = abs(node.position[0] - goal.position[0])
+    dy = abs(node.position[1] - goal.position[1])
+    return D * (dx + dy)
+
+def Euclidean(node, goal, D= 1):  # 대각선 이동이 없는 경우의 휴리스틱 함수
+    dx = abs(node.position[0] - goal.position[0])
+    dy = abs(node.position[1] - goal.position[1])
+    return D * (dx * dx + dy * dy) ** 0.5
             
 def aStar(maze, start, end, heuristic, screen):
     # startNode와 endNode 초기화
@@ -116,20 +135,21 @@ def aStar(maze, start, end, heuristic, screen):
             
             # f, g, h값 업데이트
             new_node.g = currentNode.g + 1
+
             if heuristic == 1 or heuristic == None:
                 new_node.h = Manhattan(new_node, endNode)
             else:
                 new_node.h = Euclidean(new_node, endNode)
+
             new_node.f = new_node.g + new_node.h
             print(new_node.position, new_node.g, new_node.h, new_node.f)
 
             # 자식이 openList에 있으고, g값이 더 크면 continue
             if any(child for child in openList if new_node.position == child.position and new_node.g > child.g):
-                print("im here~")
                 continue
 
             heapq.heappush(openList, new_node)
-            #liveDrawVisit(screen, start, end, openList)
+            liveDrawOpen(screen, maze, start, end, openList)
             explored += 1
             
             #print(exploredList)
@@ -307,6 +327,7 @@ def main(m, n, r):
                             print("set Manhattan", radioButtons.value)
                         if euclidean_btn.collidepoint(mouse_pos):
                             print("set Euclidean", radioButtons.value)
+
 
                         if start_button.collidepoint(mouse_pos):
                             if radioButtons.value is None:
