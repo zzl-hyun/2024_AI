@@ -1,0 +1,114 @@
+# Iterate over the number of epochs
+for epoch in range(1, num_epochs + 1):
+    # Shuffle the data
+    shuffle(X, y)
+    
+    # Partition the data into minibatches
+    num_batches = len(X) // batch_size
+    
+    for batch in range(num_batches):
+        # Create a minibatch
+        start = batch * batch_size
+        end = start + batch_size
+        X_batch = X[start:end]
+        y_batch = y[start:end]
+        
+        # Compute the gradients for the minibatch
+        grad_w = 0
+        grad_b = 0
+        for i in range(len(X_batch)):
+            x_i = X_batch[i]
+            y_i = y_batch[i]
+            prediction = dot(w, x_i) + b
+            error = prediction - y_i
+            grad_w += error * x_i
+            grad_b += error
+        
+        # Average gradients over the minibatch
+        grad_w /= len(X_batch)
+        grad_b /= len(X_batch)
+        
+        # Update parameters
+        w -= learning_rate * grad_w
+        b -= learning_rate * grad_b
+        
+    # Optionally: Compute and store the loss for monitoring convergence
+    # loss = compute_loss(X, y, w, b)
+    # store(loss)
+
+# Function to compute the loss
+def compute_loss(X, y, w, b):
+    total_loss = 0
+    for i in range(len(X)):
+        prediction = dot(w, X[i]) + b
+        error = prediction - y[i]
+        total_loss += error ** 2
+    return total_loss / len(X)
+
+
+
+
+
+# Initialize validation set (X_val, y_val)
+# Optionally split the data into training and validation sets
+
+# Iterate over the number of epochs
+for epoch in range(1, num_epochs + 1):
+    # Shuffle the training data
+    shuffle(X, y)
+    
+    # Partition the data into minibatches
+    num_batches = len(X) // batch_size
+    
+    for batch in range(num_batches):
+        # Create a minibatch
+        start = batch * batch_size
+        end = start + batch_size
+        X_batch = X[start:end]
+        y_batch = y[start:end]
+        
+        # Compute the gradients for the minibatch
+        grad_w = 0
+        grad_b = 0
+        for i in range(len(X_batch)):
+            x_i = X_batch[i]
+            y_i = y_batch[i]
+            prediction = dot(w, x_i) + b
+            error = prediction - y_i
+            grad_w += error * x_i
+            grad_b += error
+        
+        # Average gradients over the minibatch
+        grad_w /= len(X_batch)
+        grad_b /= len(X_batch)
+        
+        # Update parameters
+        w -= learning_rate * grad_w
+        b -= learning_rate * grad_b
+    
+    # Compute the validation loss after each epoch
+    val_loss = compute_loss(X_val, y_val, w, b)
+    
+    # Check for early stopping
+    if val_loss < best_loss - tolerance:
+        best_loss = val_loss
+        best_w = w
+        best_b = b
+        epochs_without_improvement = 0
+    else:
+        epochs_without_improvement += 1
+    
+    if epochs_without_improvement >= patience:
+        print("Early stopping triggered.")
+        w = best_w
+        b = best_b
+        break
+
+# Function to compute the loss
+def compute_loss(X, y, w, b):
+    total_loss = 0
+    for i in range(len(X)):
+        prediction = dot(w, X[i]) + b
+        error = prediction - y[i]
+        total_loss += error ** 2
+    return total_loss / len(X)
