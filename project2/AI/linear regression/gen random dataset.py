@@ -13,16 +13,17 @@ def split_dataset(X, y, train_ratio=0.85, dev_ratio=0.05, test_ratio=0.10):
     total_samples = X.shape[0]
     indices = np.random.permutation(total_samples)
     
-    # Calculate number of samples for each set
+     # 각 set의 샘플 수 계산하기
     train_end = int(train_ratio * total_samples)
     dev_end = train_end + int(dev_ratio * total_samples)
     
-    # Split the indices for training, development and test sets
+    # train, dev, test set 분할
     train_indices = indices[:train_end]
     dev_indices = indices[train_end:dev_end]
     test_indices = indices[dev_end:]
-    
-    # Create subsets for training, development, and test sets
+      
+
+    # 하위 집합 생성
     X_train, y_train = X[train_indices], y[train_indices]
     X_dev, y_dev = X[dev_indices], y[dev_indices]
     X_test, y_test = X[test_indices], y[test_indices]
@@ -41,13 +42,13 @@ if __name__ == "__main__":
     R = 10  
     alpha = 0.1  
 
-    # Generate dataset
+    # dataset 생성
     X, y, w, b = generate_dataset(N, d, R, alpha)
     
-    # Split dataset
+    # dataset 분할
     (X_train, y_train), (X_dev, y_dev), (X_test, y_test) = split_dataset(X, y)
 
-    # Save datasets
+    # datasets 저장
     data_to_save = {
         'train': (X_train, y_train),
         'dev': (X_dev, y_dev),
